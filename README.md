@@ -13,15 +13,17 @@
 * Parafusos M2.2 x 6.5mm
 * Tubo termo retrátil φ2.0 x 40mm
 * Case da estação meteorológica
+* Resistor de 150 Ohms e 10K Ohms
 * botão momentâneo
 
 
 ## Funcionalidades adicionais:
 
-- [x] temporizador para troca de tela
+- [x] Temporizador para troca de tela
 - [x] Clique curto no botão momentâneo para troca de tela
 - [x] Clique longo no botão momentâneo para troca da cor do tema
-- [ ] Temporizador para API (em breve, retira o delay onde aparece a tela da previsão)
+- [x] Indicador de intensidade sinal de rede
+- [x] Temporizador para API (retira o delay onde aparece a tela da previsão)
 - [ ] Tela da previsão do dia atual (em breve)
 
 
@@ -49,3 +51,10 @@
 |Pino 1        |3.3V            |
 |Pino 2        |D6              |
 |Pino 4        |GND             |
+
+
+## Criando novas imagens para o display LCD TFT
+
+[Conversor de imagem](http://javl.github.io/image2cpp/)
+* Para facilitar a imagem deve conter apenas as cores preto e branco.
+* Apenas a parte brancas na imagem será a area que será preenchida pela biblioteca do display.
