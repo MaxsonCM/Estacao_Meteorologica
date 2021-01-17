@@ -17,7 +17,7 @@
 #define TFT_MOSI      13
 #define TFT_SCLK      14
 #define DHT_PIN       12
-#define BOTAO         16
+#define BOTAO         16 //D0
 
 //controle da cor do tema
 boolean dark_theme = true;
