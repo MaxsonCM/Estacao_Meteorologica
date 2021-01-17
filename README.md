@@ -53,6 +53,8 @@
 |Pino 2        |D6              |
 |Pino 4        |GND             |
 
+### Botão momentâneo
+![Conexão do botão](https://github.com/MaxsonCM/Estacao_Meteorologica/blob/main/extra/pin_button.png)
 
 ## Criando novas imagens para o display LCD TFT
 
