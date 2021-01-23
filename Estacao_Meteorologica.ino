@@ -146,6 +146,9 @@ extern unsigned char seta_cima[];
 extern unsigned char seta_cima2[];
 extern unsigned char seta_baixo[];
 extern unsigned char seta_baixo2[];
+extern unsigned char circulo1[];
+extern unsigned char circulo2[];
+
 
 void connectWifi() {
   int tentativa;
@@ -317,252 +320,12 @@ void pressao(){
   tft.print(" hPa"); 
 }
 
-
-void previsao() {
-  tft.setTextSize(1);
-  
-  OpenWeatherMapOneCall *oneCallClient = new OpenWeatherMapOneCall();
-  oneCallClient->setMetric(IS_METRIC);
-  oneCallClient->setLanguage(OPEN_WEATHER_MAP_LANGUAGE);
-
-  long executionStart = millis();
-  oneCallClient->update(&openWeatherMapOneCallData, String(OPEN_WEATHER_MAP_APP_ID), OPEN_WEATHER_MAP_LOCATTION_LAT, OPEN_WEATHER_MAP_LOCATTION_LON);
-  delete oneCallClient;
-  oneCallClient = nullptr;
-  float pop;
-  float uvi;
-  time_t time;
-
-  time_t observationTimestamp1 = openWeatherMapOneCallData.daily[1].dt;
-  struct tm* timeInfo1;
-  timeInfo1 = localtime(&observationTimestamp1);
-  tft.setCursor(47,35);
-  tft.print(WDAY_NAMES[timeInfo1->tm_wday]);
-  tft.print(" (");
-  tft.print(timeInfo1->tm_mday);
-  tft.print("/");
-  tft.print(MONTH_NAMES[timeInfo1->tm_mon]);
-  tft.print(")");
-  
-  tft.drawBitmap(47, 45, seta_baixo, 8, 8, VERDE);
-  tft.drawBitmap(47, 45, seta_baixo2, 8, 8, PRETO);
-  
-  int tmin1 = openWeatherMapOneCallData.daily[1].tempMin;
-  tft.setCursor(62,45);
-  tft.print(tmin1);
-  
-  tft.drawBitmap(90, 45, seta_cima, 8, 8, VERMELHO);
-  tft.drawBitmap(90, 45, seta_cima2, 8, 8, PRETO);
-  
-  tft.setCursor(105,45);
-  int tmax1 = openWeatherMapOneCallData.daily[1].tempMax;
-  tft.print(tmax1);
-  
-  String cond1 = openWeatherMapOneCallData.daily[1].weatherMain;
-  pop = openWeatherMapOneCallData.daily[1].rain;
-  uvi = openWeatherMapOneCallData.daily[1].uvi;
-  
-  if (cond1 == "Thunderstorm"){
-    tft.setCursor(47,55);
-    tft.print("Tempestade");   
-    
-    tft.drawBitmap(3,30,tempestade1,48,48,TEM1);
-    tft.drawBitmap(3,30,tempestade2,48,48,TEM2);
-    tft.drawBitmap(3,30,tempestade3,48,48,TEM3);
-    tft.drawBitmap(3,30,tempestade4,48,48,PRETO);
-  }
-  else if (cond1 == "Rain"){
-    tft.setCursor(47,55);
-    tft.print("Chuva");
-    tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,30,chuva1,48,48,CHU1);
-    tft.drawBitmap(3,30,chuva2,48,48,CHU2);
-    tft.drawBitmap(3,30,chuva3,48,48,PRETO);
-  }
-  else if(cond1 == "Drizzle"){
-    tft.setCursor(47,55);
-    tft.print("Pouca Chuva");
-    //tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,30,chuva1,48,48,CHU1);
-    tft.drawBitmap(3,30,chuva2,48,48,CHU2);
-    tft.drawBitmap(3,30,chuva3,48,48,PRETO);
-  }
-  else if(cond1 == "Clouds"){
-    tft.setCursor(47,55);
-    tft.print("Nublado");
-    //tft.print((String)"  UV " + uvi );
-    
-    tft.drawBitmap(3,30,nublado1,48,48,NUB1);
-    tft.drawBitmap(3,30,nublado2,48,48,NUB2);
-    tft.drawBitmap(3,30,nublado3,48,48,PRETO);
-  }
-  else if(cond1 == "Clear"){
-    tft.setCursor(47,55);
-    tft.print("Sol");
-    tft.print((String)"  UV " + uvi );
-    
-    tft.drawBitmap(3,30,sol1,48,48,SOL1);
-    tft.drawBitmap(3,30,sol2,48,48,SOL2);
-    tft.drawBitmap(3,30,sol3,48,48,PRETO);
-  }
-  
-  time_t observationTimestamp2 = openWeatherMapOneCallData.daily[2].dt;
-  struct tm* timeInfo2;
-  timeInfo2 = localtime(&observationTimestamp2);
-  tft.setCursor(47,80);
-  tft.print(WDAY_NAMES[timeInfo2->tm_wday]);
-  tft.print(" (");
-  tft.print(timeInfo2->tm_mday);
-  tft.print("/");
-  tft.print(MONTH_NAMES[timeInfo2->tm_mon]);
-  tft.print(")");
-  
-  tft.drawBitmap(47, 90, seta_baixo, 8, 8, VERDE);
-  tft.drawBitmap(47, 90, seta_baixo2, 8, 8, PRETO);
-  
-  tft.setCursor(62,90);
-  int tmin2 = openWeatherMapOneCallData.daily[2].tempMin;
-  tft.print(tmin2);
-  
-  tft.drawBitmap(90, 90, seta_cima, 8, 8, VERMELHO);
-  tft.drawBitmap(90, 90, seta_cima2, 8, 8, PRETO);
-
-  tft.setCursor(105,90);
-  int tmax2 = openWeatherMapOneCallData.daily[2].tempMax;
-  tft.print(tmax2);
-  String cond2 = openWeatherMapOneCallData.daily[2].weatherMain;
-  pop = openWeatherMapOneCallData.daily[2].rain;
-  uvi = openWeatherMapOneCallData.daily[2].uvi;
-  
-  if (cond2 == "Thunderstorm"){
-    tft.setCursor(47,100);
-    tft.print("Tempestade");
-    tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,75,tempestade1,48,48,TEM1);
-    tft.drawBitmap(3,75,tempestade2,48,48,TEM2);
-    tft.drawBitmap(3,75,tempestade3,48,48,TEM3);
-    tft.drawBitmap(3,75,tempestade4,48,48,PRETO);
-  }
-  else if (cond2 == "Rain"){
-    tft.setCursor(47,100);
-    tft.print("Chuva");
-    tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,75,chuva1,48,48,CHU1);
-    tft.drawBitmap(3,75,chuva2,48,48,CHU2);
-    tft.drawBitmap(3,75,chuva3,48,48,PRETO);
-  }
-  else if(cond2 == "Drizzle"){
-    tft.setCursor(47,100);
-    tft.print("Pouca Chuva");
-    tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,75,chuva1,48,48,CHU1);
-    tft.drawBitmap(3,75,chuva2,48,48,CHU2);
-    tft.drawBitmap(3,75,chuva3,48,48,PRETO);
-  }
-  else if(cond2 == "Clouds"){
-    tft.setCursor(47,100);
-    tft.print("Nublado");
-    tft.print((String)" UV " + uvi );
-    
-    tft.drawBitmap(3,75,nublado1,48,48,NUB1);
-    tft.drawBitmap(3,75,nublado2,48,48,NUB2);
-    tft.drawBitmap(3,75,nublado3,48,48,PRETO);
-  }
-  else if(cond2 == "Clear"){
-    tft.setCursor(47, 100);
-    tft.print("Sol");
-    tft.print((String)"  UV " + uvi );
-    
-    tft.drawBitmap(3,75,sol1,48,48,SOL1);
-    tft.drawBitmap(3,75,sol2,48,48,SOL2);
-    tft.drawBitmap(3,75,sol3,48,48,PRETO);
-  }
-
-  time_t observationTimestamp3 = openWeatherMapOneCallData.daily[3].dt;
-  struct tm* timeInfo3;
-  timeInfo3 = localtime(&observationTimestamp3);
-  tft.setTextSize(1);
-  tft.setCursor(47,125);
-  tft.print(WDAY_NAMES[timeInfo3->tm_wday]);
-  tft.print(" (");
-  tft.print(timeInfo3->tm_mday);
-  tft.print("/");
-  tft.print(MONTH_NAMES[timeInfo3->tm_mon]);
-  tft.print(")");
-  
-  tft.drawBitmap(47, 135, seta_baixo, 8, 8, VERDE);
-  tft.drawBitmap(47, 135, seta_baixo2, 8, 8, PRETO);
-  
-  tft.setCursor(62,135);
-  int tmin3 = openWeatherMapOneCallData.daily[3].tempMin;
-  tft.print(tmin3);
-  
-  tft.drawBitmap(90, 135, seta_cima, 8, 8, VERMELHO);
-  tft.drawBitmap(90, 135, seta_cima2, 8, 8, PRETO);
-
-  tft.setCursor(105, 135);
-  int tmax3 = openWeatherMapOneCallData.daily[3].tempMax;
-  tft.print(tmax3);
-  String cond3 = openWeatherMapOneCallData.daily[3].weatherMain;
-  pop = openWeatherMapOneCallData.daily[3].rain;
-  uvi = openWeatherMapOneCallData.daily[3].uvi;
-  
-  if (cond3 == "Thunderstorm"){
-    tft.setCursor(47,145);
-    tft.print("Tempestade");
-    //tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,120,tempestade1,48,48,TEM1);
-    tft.drawBitmap(3,120,tempestade2,48,48,TEM2);
-    tft.drawBitmap(3,120,tempestade3,48,48,TEM3);
-    tft.drawBitmap(3,120,tempestade4,48,48,PRETO);
-  }
-  else if (cond3 == "Rain"){
-    tft.setCursor(47,145);
-    tft.print("Chuva");
-    tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,120,chuva1,48,48,CHU1);
-    tft.drawBitmap(3,120,chuva2,48,48,CHU2);
-    tft.drawBitmap(3,120,chuva3,48,48,PRETO);
-  }
-  else if(cond3 == "Drizzle"){
-    tft.setCursor(47,145);
-    tft.print("Pouca Chuva");
-    //tft.print((String)" " + pop + "mm");
-    
-    tft.drawBitmap(3,120,chuva1,48,48,CHU1);
-    tft.drawBitmap(3,120,chuva2,48,48,CHU2);
-    tft.drawBitmap(3,120,chuva3,48,48,PRETO);
-  }
-  else if(cond3 == "Clouds"){
-    tft.setCursor(47,145);
-    tft.print("Nublado");
-    //tft.print((String)" UV " + uvi );
-    
-    tft.drawBitmap(3,120,nublado1,48,48,NUB1);
-    tft.drawBitmap(3,120,nublado2,48,48,NUB2);
-    tft.drawBitmap(3,120,nublado3,48,48,PRETO);
-  }
-  else if(cond3 == "Clear"){
-    tft.setCursor(47, 145);
-    tft.print("Sol");
-    tft.print((String)"  UV " + uvi );
-    
-    tft.drawBitmap(3,120,sol1,48,48,SOL1);
-    tft.drawBitmap(3,120,sol2,48,48,SOL2);
-    tft.drawBitmap(3,120,sol3,48,48,PRETO);
-  }
-}
-
 void consultar_previsao() {
 
   Serial.print("Consultando API...");
+  
+  tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+  tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
   
   OpenWeatherMapOneCall *oneCallClient = new OpenWeatherMapOneCall();
   oneCallClient->setMetric(IS_METRIC);
@@ -589,13 +352,98 @@ void consultar_previsao() {
   }
   
   consulta = true;
+  tft.drawBitmap(2, 2, circulo1, 8, 8, VERDE);
+}
 
+void exibir_previsao1() {
+  //primeiro dia
+  int posicaoX, posicaoY;
+  posicaoX=40;
+  posicaoY=40;
+  
+  tft.setTextSize(1);
+  
+  if (weatherMain[0] == "Thunderstorm"){
+    tft.drawBitmap(posicaoX, posicaoY,tempestade1,48,48,TEM1);
+    tft.drawBitmap(posicaoX, posicaoY,tempestade2,48,48,TEM2);
+    tft.drawBitmap(posicaoX, posicaoY,tempestade3,48,48,TEM3);
+    tft.drawBitmap(posicaoX, posicaoY,tempestade4,48,48,PRETO);
+    posicaoY += 45;
+    tft.setCursor(45, posicaoY);
+    tft.print("Tempestade");
+  }
+  else if (weatherMain[0] == "Rain"){
+    tft.drawBitmap(posicaoX, posicaoY,chuva1,48,48,CHU1);
+    tft.drawBitmap(posicaoX, posicaoY,chuva2,48,48,CHU2);
+    tft.drawBitmap(posicaoX, posicaoY,chuva3,48,48,PRETO);
+    posicaoY += 45;
+    tft.setCursor(47, posicaoY);
+    tft.print("Chuva");
+  }
+  else if(weatherMain[0] == "Drizzle"){
+    tft.drawBitmap(posicaoX, posicaoY,chuva1,48,48,CHU1);
+    tft.drawBitmap(posicaoX, posicaoY,chuva2,48,48,CHU2);
+    tft.drawBitmap(posicaoX, posicaoY,chuva3,48,48,PRETO);
+    posicaoY += 45;
+    tft.setCursor(43, posicaoY);
+    tft.print("Pouca Chuva");
+  }
+  else if(weatherMain[0] == "Clouds"){
+    tft.drawBitmap(posicaoX, posicaoY,nublado1,48,48,NUB1);
+    tft.drawBitmap(posicaoX, posicaoY,nublado2,48,48,NUB2);
+    tft.drawBitmap(posicaoX, posicaoY,nublado3,48,48,PRETO);
+    posicaoY += 45;
+    tft.setCursor(47, posicaoY);
+    tft.print("Nublado");
+  }
+  else if(weatherMain[0] == "Clear"){
+    tft.drawBitmap(posicaoX, posicaoY,sol1,48,48,SOL1);
+    tft.drawBitmap(posicaoX, posicaoY,sol2,48,48,SOL2);
+    tft.drawBitmap(posicaoX, posicaoY,sol3,48,48,PRETO);
+    posicaoY += 45;
+    tft.setCursor(52, posicaoY);
+    tft.print("Sol");
+  }
+  
+  posicaoY += 10;
+  /*
+  tft.setCursor(27, posicaoY);
+  tft.print(wday[0]);
+  tft.print(" (");
+  tft.print(mday[0]);
+  tft.print("/");
+  tft.print(mon[0]);
+  tft.print(")");
+  */
+  posicaoY += 10;
+  tft.drawBitmap(27, posicaoY, seta_baixo, 8, 8, VERDE);
+  tft.drawBitmap(27, posicaoY, seta_baixo2, 8, 8, PRETO);
+  
+  tft.setCursor(42, posicaoY);
+  tft.print(tempMin[0]);
+  
+  tft.drawBitmap(70, posicaoY, seta_cima, 8, 8, VERMELHO);
+  tft.drawBitmap(70, posicaoY, seta_cima2, 8, 8, PRETO);
+
+  tft.setCursor(85, posicaoY);
+  tft.print(tempMax[0]);
+
+  posicaoY += 10;
+  tft.setCursor(10, posicaoY);
+  tft.print((String)"UV " + uvi[0]);
+  tft.setCursor(70, posicaoY);
+  tft.print((String)" " + rain[0] + "mm");
+  
+  tft.setTextSize(2);
+  posicaoY += 20;  
+  tft.setCursor(40, posicaoY);
+  tft.print("HOJE");
 }
 
 void exibir_previsao2() {
   
   //Segundo dia
-  tft.setTextSize(1);  
+  tft.setTextSize(1);
   
   tft.setCursor(47,35);
   tft.print(wday[1]);
@@ -620,6 +468,7 @@ void exibir_previsao2() {
   if (weatherMain[1] == "Thunderstorm"){
     tft.setCursor(47,55);
     tft.print("Tempestade");   
+    tft.print((String)" " + (int)rain[1] + "mm");
     
     tft.drawBitmap(3,30,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,30,tempestade2,48,48,TEM2);
@@ -638,6 +487,7 @@ void exibir_previsao2() {
   else if(weatherMain[1] == "Drizzle"){
     tft.setCursor(47,55);
     tft.print("Pouca Chuva");
+    //tft.print((String)" " + (int)rain[1] + "mm");
     
     tft.drawBitmap(3,30,chuva1,48,48,CHU1);
     tft.drawBitmap(3,30,chuva2,48,48,CHU2);
@@ -646,6 +496,7 @@ void exibir_previsao2() {
   else if(weatherMain[1] == "Clouds"){
     tft.setCursor(47,55);
     tft.print("Nublado");
+    tft.print((String)" UV " + (int)uvi[1] );
     
     tft.drawBitmap(3,30,nublado1,48,48,NUB1);
     tft.drawBitmap(3,30,nublado2,48,48,NUB2);
@@ -685,7 +536,7 @@ void exibir_previsao2() {
   if (weatherMain[2] == "Thunderstorm"){
     tft.setCursor(47,100);
     tft.print("Tempestade");
-    tft.print((String)" " + rain[2] + "mm");
+    tft.print((String)" " + (int)rain[2] + "mm");
     
     tft.drawBitmap(3,75,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,75,tempestade2,48,48,TEM2);
@@ -704,7 +555,7 @@ void exibir_previsao2() {
   else if(weatherMain[2] == "Drizzle"){
     tft.setCursor(47,100);
     tft.print("Pouca Chuva");
-    //tft.print((String)" " + rain[2] + "mm");
+    //tft.print((String)" " + (int)rain[2] + "mm");
     
     tft.drawBitmap(3,75,chuva1,48,48,CHU1);
     tft.drawBitmap(3,75,chuva2,48,48,CHU2);
@@ -713,7 +564,7 @@ void exibir_previsao2() {
   else if(weatherMain[2] == "Clouds"){
     tft.setCursor(47,100);
     tft.print("Nublado");
-    tft.print((String)" UV " + uvi[2] );
+    tft.print((String)" UV " + (int)uvi[2] );
     
     tft.drawBitmap(3,75,nublado1,48,48,NUB1);
     tft.drawBitmap(3,75,nublado2,48,48,NUB2);
@@ -754,7 +605,7 @@ void exibir_previsao2() {
   if (weatherMain[3] == "Thunderstorm"){
     tft.setCursor(47,145);
     tft.print("Tempestade");
-    //tft.print((String)" " + rain[3] + "mm");
+    tft.print((String)" " + (int)rain[3] + "mm");
     
     tft.drawBitmap(3,120,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,120,tempestade2,48,48,TEM2);
@@ -773,7 +624,7 @@ void exibir_previsao2() {
   else if(weatherMain[3] == "Drizzle"){
     tft.setCursor(47,145);
     tft.print("Pouca Chuva");
-    //tft.print((String)" " + rain[3] + "mm");
+    //tft.print((String)" " + (int)rain[3] + "mm");
     
     tft.drawBitmap(3,120,chuva1,48,48,CHU1);
     tft.drawBitmap(3,120,chuva2,48,48,CHU2);
@@ -782,7 +633,7 @@ void exibir_previsao2() {
   else if(weatherMain[3] == "Clouds"){
     tft.setCursor(47,145);
     tft.print("Nublado");
-    //tft.print((String)" UV " + uvi[3] );
+    tft.print((String)" UV " + (int)uvi[3] );
     
     tft.drawBitmap(3,120,nublado1,48,48,NUB1);
     tft.drawBitmap(3,120,nublado2,48,48,NUB2);
@@ -797,6 +648,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,sol2,48,48,SOL2);
     tft.drawBitmap(3,120,sol3,48,48,PRETO);
   }
+  
 }
 
 
@@ -867,7 +719,8 @@ void loop() {
     
     temporizador = 0;
     desenha = false;
-    if ( passo >= 3 ) passo = -1;
+    if ( passo == 3 ) passo = 4; //pula exibe previsão 1
+    if ( passo == 5 ) passo = -1; //pula exibe previsão 2
     
   }else if (action == 2 ){
     
@@ -914,21 +767,37 @@ void loop() {
     desenha = false;
     
   } else if ( passo == 3 && desenha ) {
-    //if (WiFi.status() == WL_CONNECTED) {
     if (consulta == true) { 
       tft.fillScreen(back_color);
       data();
       horario();
-      //previsao();
-      exibir_previsao2();
+      exibir_previsao1();
       desenha = false;
-      //temporizador = millis();
     } else { 
       passo = -1;
       temporizador = 0;
       desenha = false;
     }
   } else if ( passo == 4 && desenha ) {
+    tft.drawBitmap(0, 15, tapa_texto, 128, 5, back_color);
+    tft.drawBitmap(0, 20, tapa_texto, 128, 5, back_color);
+    tft.drawBitmap(0, 25, tapa_texto, 128, 5, back_color);
+    horario();
+    
+    desenha = false;
+  } else if ( passo == 5 && desenha ) {
+    if (consulta == true) { 
+      tft.fillScreen(back_color);
+      data();
+      horario();
+      exibir_previsao2();
+      desenha = false;
+    } else { 
+      passo = -1;
+      temporizador = 0;
+      desenha = false;
+    }
+  } else if ( passo == 6 && desenha ) {
     tft.drawBitmap(0, 15, tapa_texto, 128, 5, back_color);
     tft.drawBitmap(0, 20, tapa_texto, 128, 5, back_color);
     tft.drawBitmap(0, 25, tapa_texto, 128, 5, back_color);
