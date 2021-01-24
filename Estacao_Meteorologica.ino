@@ -9,6 +9,8 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include "OpenWeatherMapOneCall.h"
+#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
 // Pinos
 #define TFT_CS         0
@@ -46,6 +48,8 @@ WiFiUDP ntpUDP;
 const long utcOffsetInSeconds = -10800;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
+extern const int USAR_API;
+
 //Definições Open Weather Map 
 extern const char* OPEN_WEATHER_MAP_APP_ID; 
 // - Definir no arquivo config.c
@@ -55,10 +59,13 @@ String OPEN_WEATHER_MAP_LANGUAGE = "pt";
 boolean IS_METRIC = true;
 
 OpenWeatherMapOneCallData openWeatherMapOneCallData;
+// Definir variaveis do cliema tempo
+extern const char* CLIMA_TEMPO_TOKEN;
+extern const int CLIMA_TEMPO_LOCATE;
 
 // Variáveis de consulta do clima
 long temporizador_clima;
-const long UPDATE_TIME = 1200000;
+const long UPDATE_TIME = 60000 * 30; // 30 minutos
 boolean consulta;
 
 String weatherMain[4];
@@ -148,7 +155,9 @@ extern unsigned char seta_baixo[];
 extern unsigned char seta_baixo2[];
 extern unsigned char circulo1[];
 extern unsigned char circulo2[];
-
+extern unsigned char neve1[];
+extern unsigned char neve2[];
+extern unsigned char neve3[];
 
 void connectWifi() {
   int tentativa;
@@ -320,39 +329,120 @@ void pressao(){
   tft.print(" hPa"); 
 }
 
-void consultar_previsao() {
+void consultar_previsao_clima_tempo() {
 
-  Serial.print("Consultando API...");
+  Serial.println("Consultando API clima tempo...");
   
   tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
   tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
   
-  OpenWeatherMapOneCall *oneCallClient = new OpenWeatherMapOneCall();
-  oneCallClient->setMetric(IS_METRIC);
-  oneCallClient->setLanguage(OPEN_WEATHER_MAP_LANGUAGE);
-  
-  oneCallClient->update(&openWeatherMapOneCallData, String(OPEN_WEATHER_MAP_APP_ID), OPEN_WEATHER_MAP_LOCATTION_LAT, OPEN_WEATHER_MAP_LOCATTION_LON);
-  delete oneCallClient;
-  oneCallClient = nullptr;
-
-  time_t observationTimestamp;
-  struct tm* timeInfo;
-
-  for (int i = 0; i <= 3; i++) {
-    observationTimestamp = openWeatherMapOneCallData.daily[i].dt;
-    timeInfo = localtime(&observationTimestamp);
-    wday[i] = WDAY_NAMES[timeInfo->tm_wday];
-    mday[i] = (timeInfo->tm_mday);
-    mon[i] = MONTH_NAMES[timeInfo->tm_mon];
-    tempMin[i] = openWeatherMapOneCallData.daily[i].tempMin;
-    tempMax[i] = openWeatherMapOneCallData.daily[i].tempMax;
-    weatherMain[i] = openWeatherMapOneCallData.daily[i].weatherMain;
-    rain[i] = openWeatherMapOneCallData.daily[i].rain;
-    uvi[i] = openWeatherMapOneCallData.daily[i].uvi;
+  if (WiFi.status() == WL_CONNECTED) {
+    
+    Serial.println("HTTPClient - API clima tempo...");
+    
+    HTTPClient http;
+    
+    Serial.println("Montando url de consulta - API clima tempo...");
+    http.begin((String) "http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/" + CLIMA_TEMPO_LOCATE + "/days/15?token=" + CLIMA_TEMPO_TOKEN);
+    
+    Serial.println("GET - API clima tempo...");
+    int httpCode = http.GET();
+    
+    if (httpCode > 0) {
+      Serial.println((String) "Status " + httpCode);
+      
+      if (httpCode == 200){
+        Serial.println("Criando documento Json");
+        DynamicJsonDocument doc(8192);
+        Serial.println("Deserializando");
+        deserializeJson(doc, http.getString());
+        
+        Serial.println("Lento dados do documento Json");
+        String data_atual;
+        for (int i = 0; i <= 3; i++) {
+          String data_atual = doc["data"][i]["date"];
+          int m, a, s, ano, dia, mes, semana;
+          dia = data_atual.substring(8).toInt();
+          mes = data_atual.substring(5,7).toInt();
+          ano = data_atual.substring(0,5).toInt();
+          
+          s = ano / 100;
+          a = ano % 100;
+          if(mes <= 2){
+            m = mes + 10;
+            a = a - 1;
+          }else{
+            m = mes - 2;
+          }
+          semana = (int)(2.6 * m - 0.1) + dia + a + (a / 4) + (s / 4) - 2 * s;
+          semana = semana % 7;
+          if(semana < 0){ semana = semana + 7;}
+          
+          mes -= 1;
+          
+          String icone = doc["data"][i]["text_icon"]["icon"]["morning"];
+          
+          weatherMain[i] = icone.substring(0,1);
+          wday[i] = WDAY_NAMES[semana];
+          mday[i] = dia;
+          mon[i] = MONTH_NAMES[mes];
+          tempMin[i] = doc["data"][i]["thermal_sensation"]["min"];
+          tempMax[i] = doc["data"][i]["thermal_sensation"]["max"];
+          rain[i] = doc["data"][i]["rain"]["precipitation"];
+          uvi[i] = doc["data"][i]["uv"]["max"];
+        }
+        
+        consulta = true;
+        tft.drawBitmap(2, 2, circulo1, 8, 8, VERDE); 
+      }else{
+        Serial.println("GET ERRO - API clima tempo...");
+      }
+    }else{
+      Serial.println("ERRO - API clima tempo...");
+    }
+    
+    http.end();
+ 
   }
   
-  consulta = true;
-  tft.drawBitmap(2, 2, circulo1, 8, 8, VERDE);
+}
+
+void consultar_previsao_open_weather() {
+  
+  Serial.println("Consultando API OPEN WEATHER...");
+  
+  tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+  tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    OpenWeatherMapOneCall *oneCallClient = new OpenWeatherMapOneCall();
+    oneCallClient->setMetric(IS_METRIC);
+    oneCallClient->setLanguage(OPEN_WEATHER_MAP_LANGUAGE);
+    
+    oneCallClient->update(&openWeatherMapOneCallData, String(OPEN_WEATHER_MAP_APP_ID), OPEN_WEATHER_MAP_LOCATTION_LAT, OPEN_WEATHER_MAP_LOCATTION_LON);
+    delete oneCallClient;
+    oneCallClient = nullptr;
+  
+    time_t observationTimestamp;
+    struct tm* timeInfo;
+  
+    for (int i = 0; i <= 3; i++) {
+      observationTimestamp = openWeatherMapOneCallData.daily[i].dt;
+      timeInfo = localtime(&observationTimestamp);
+      wday[i] = WDAY_NAMES[timeInfo->tm_wday];
+      mday[i] = (timeInfo->tm_mday);
+      mon[i] = MONTH_NAMES[timeInfo->tm_mon];
+      tempMin[i] = openWeatherMapOneCallData.daily[i].tempMin;
+      tempMax[i] = openWeatherMapOneCallData.daily[i].tempMax;
+      weatherMain[i] = openWeatherMapOneCallData.daily[i].weatherMain;
+      rain[i] = openWeatherMapOneCallData.daily[i].rain;
+      uvi[i] = openWeatherMapOneCallData.daily[i].uvi;
+    }
+    
+    consulta = true;
+    tft.drawBitmap(2, 2, circulo1, 8, 8, VERDE);
+  }
+  
 }
 
 void exibir_previsao1() {
@@ -363,46 +453,56 @@ void exibir_previsao1() {
   
   tft.setTextSize(1);
   
-  if (weatherMain[0] == "Thunderstorm"){
+  if (weatherMain[0] == "Thunderstorm" || weatherMain[0] == "6"){
     tft.drawBitmap(posicaoX, posicaoY,tempestade1,48,48,TEM1);
     tft.drawBitmap(posicaoX, posicaoY,tempestade2,48,48,TEM2);
     tft.drawBitmap(posicaoX, posicaoY,tempestade3,48,48,TEM3);
     tft.drawBitmap(posicaoX, posicaoY,tempestade4,48,48,PRETO);
-    posicaoY += 45;
-    tft.setCursor(45, posicaoY);
+    posicaoY += 48;
+    tft.setCursor(33, posicaoY);
     tft.print("Tempestade");
   }
-  else if (weatherMain[0] == "Rain"){
+  else if (weatherMain[0] == "Rain" || weatherMain[0] == "5"){
     tft.drawBitmap(posicaoX, posicaoY,chuva1,48,48,CHU1);
     tft.drawBitmap(posicaoX, posicaoY,chuva2,48,48,CHU2);
     tft.drawBitmap(posicaoX, posicaoY,chuva3,48,48,PRETO);
-    posicaoY += 45;
+    posicaoY += 48;
     tft.setCursor(47, posicaoY);
     tft.print("Chuva");
   }
-  else if(weatherMain[0] == "Drizzle"){
+  else if(weatherMain[0] == "Drizzle" || weatherMain[0] == "4" || weatherMain[0] == "3"){
     tft.drawBitmap(posicaoX, posicaoY,chuva1,48,48,CHU1);
     tft.drawBitmap(posicaoX, posicaoY,chuva2,48,48,CHU2);
     tft.drawBitmap(posicaoX, posicaoY,chuva3,48,48,PRETO);
-    posicaoY += 45;
-    tft.setCursor(43, posicaoY);
+    posicaoY += 48;
+    tft.setCursor(29, posicaoY);
     tft.print("Pouca Chuva");
   }
-  else if(weatherMain[0] == "Clouds"){
+  else if(weatherMain[0] == "Clouds" || weatherMain[0] == "2" || weatherMain[0] == "9"){
     tft.drawBitmap(posicaoX, posicaoY,nublado1,48,48,NUB1);
     tft.drawBitmap(posicaoX, posicaoY,nublado2,48,48,NUB2);
     tft.drawBitmap(posicaoX, posicaoY,nublado3,48,48,PRETO);
-    posicaoY += 45;
-    tft.setCursor(47, posicaoY);
+    posicaoY += 48;
+    tft.setCursor(40, posicaoY);
     tft.print("Nublado");
   }
-  else if(weatherMain[0] == "Clear"){
+  else if(weatherMain[0] == "Clear" || weatherMain[0] == "1"){
     tft.drawBitmap(posicaoX, posicaoY,sol1,48,48,SOL1);
     tft.drawBitmap(posicaoX, posicaoY,sol2,48,48,SOL2);
     tft.drawBitmap(posicaoX, posicaoY,sol3,48,48,PRETO);
-    posicaoY += 45;
+    posicaoY += 48;
     tft.setCursor(52, posicaoY);
     tft.print("Sol");
+  }else if(weatherMain[0] == "Snow" || weatherMain[0] == "8"){
+    tft.drawBitmap(posicaoX, posicaoY, neve1, 48, 48, NUB1);
+    tft.drawBitmap(posicaoX, posicaoY, neve2, 48, 48, NUB2);
+    tft.drawBitmap(posicaoX, posicaoY, neve3, 48, 48, PRETO);
+    posicaoY += 48;
+    tft.setCursor(49, posicaoY);
+    tft.print("Geada");
+  
+  }else{
+    posicaoY += 48;
   }
   
   posicaoY += 10;
@@ -465,17 +565,16 @@ void exibir_previsao2() {
   tft.setCursor(105,45);
   tft.print(tempMax[1]);
   
-  if (weatherMain[1] == "Thunderstorm"){
+  if (weatherMain[1] == "Thunderstorm" || weatherMain[1] == "6"){
     tft.setCursor(47,55);
-    tft.print("Tempestade");   
-    tft.print((String)" " + (int)rain[1] + "mm");
+    tft.print("Tempestade");
     
     tft.drawBitmap(3,30,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,30,tempestade2,48,48,TEM2);
     tft.drawBitmap(3,30,tempestade3,48,48,TEM3);
     tft.drawBitmap(3,30,tempestade4,48,48,PRETO);
   }
-  else if (weatherMain[1] == "Rain"){
+  else if (weatherMain[1] == "Rain" || weatherMain[1] == "5"){
     tft.setCursor(47,55);
     tft.print("Chuva");
     tft.print((String)" " + rain[1] + "mm");
@@ -484,7 +583,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,chuva2,48,48,CHU2);
     tft.drawBitmap(3,30,chuva3,48,48,PRETO);
   }
-  else if(weatherMain[1] == "Drizzle"){
+  else if(weatherMain[1] == "Drizzle" || weatherMain[1] == "4" || weatherMain[1] == "3"){
     tft.setCursor(47,55);
     tft.print("Pouca Chuva");
     //tft.print((String)" " + (int)rain[1] + "mm");
@@ -493,7 +592,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,chuva2,48,48,CHU2);
     tft.drawBitmap(3,30,chuva3,48,48,PRETO);
   }
-  else if(weatherMain[1] == "Clouds"){
+  else if(weatherMain[1] == "Clouds" || weatherMain[1] == "2" || weatherMain[1] == "9"){
     tft.setCursor(47,55);
     tft.print("Nublado");
     tft.print((String)" UV " + (int)uvi[1] );
@@ -502,7 +601,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,nublado2,48,48,NUB2);
     tft.drawBitmap(3,30,nublado3,48,48,PRETO);
   }
-  else if(weatherMain[1] == "Clear"){
+  else if(weatherMain[1] == "Clear" || weatherMain[1] == "1"){
     tft.setCursor(47,55);
     tft.print("Sol");
     tft.print((String)"  UV " + uvi[1] );
@@ -510,6 +609,12 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,sol1,48,48,SOL1);
     tft.drawBitmap(3,30,sol2,48,48,SOL2);
     tft.drawBitmap(3,30,sol3,48,48,PRETO);
+  }else if(weatherMain[1] == "Snow" || weatherMain[1] == "8"){
+    tft.drawBitmap(3, 30, neve1, 48, 48, CHU1);
+    tft.drawBitmap(3, 30, neve2, 48, 48, CHU2);
+    tft.drawBitmap(3, 30, neve3, 48, 48, PRETO);
+    tft.setCursor(47,55);
+    tft.print("Geada");
   }
   
   //Terceiro dia
@@ -533,17 +638,16 @@ void exibir_previsao2() {
   tft.setCursor(105,90);  
   tft.print(tempMax[2]);
   
-  if (weatherMain[2] == "Thunderstorm"){
+  if (weatherMain[2] == "Thunderstorm" || weatherMain[2] == "6"){
     tft.setCursor(47,100);
     tft.print("Tempestade");
-    tft.print((String)" " + (int)rain[2] + "mm");
     
     tft.drawBitmap(3,75,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,75,tempestade2,48,48,TEM2);
     tft.drawBitmap(3,75,tempestade3,48,48,TEM3);
     tft.drawBitmap(3,75,tempestade4,48,48,PRETO);
   }
-  else if (weatherMain[2] == "Rain"){
+  else if (weatherMain[2] == "Rain" || weatherMain[2] == "5"){
     tft.setCursor(47,100);
     tft.print("Chuva");
     tft.print((String)" " + rain[2] + "mm");
@@ -552,7 +656,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,chuva2,48,48,CHU2);
     tft.drawBitmap(3,75,chuva3,48,48,PRETO);
   }
-  else if(weatherMain[2] == "Drizzle"){
+  else if(weatherMain[2] == "Drizzle" || weatherMain[2] == "4" || weatherMain[2] == "3"){
     tft.setCursor(47,100);
     tft.print("Pouca Chuva");
     //tft.print((String)" " + (int)rain[2] + "mm");
@@ -561,7 +665,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,chuva2,48,48,CHU2);
     tft.drawBitmap(3,75,chuva3,48,48,PRETO);
   }
-  else if(weatherMain[2] == "Clouds"){
+  else if(weatherMain[2] == "Clouds" || weatherMain[2] == "2" || weatherMain[2] == "9"){
     tft.setCursor(47,100);
     tft.print("Nublado");
     tft.print((String)" UV " + (int)uvi[2] );
@@ -570,7 +674,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,nublado2,48,48,NUB2);
     tft.drawBitmap(3,75,nublado3,48,48,PRETO);
   }
-  else if(weatherMain[2] == "Clear"){
+  else if(weatherMain[2] == "Clear" || weatherMain[2] == "1"){
     tft.setCursor(47, 100);
     tft.print("Sol");
     tft.print((String)"  UV " + uvi[2] );
@@ -578,6 +682,12 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,sol1,48,48,SOL1);
     tft.drawBitmap(3,75,sol2,48,48,SOL2);
     tft.drawBitmap(3,75,sol3,48,48,PRETO);
+  }else if(weatherMain[2] == "Snow" || weatherMain[2] == "8"){
+    tft.drawBitmap(3, 75, neve1, 48, 48, CHU1);
+    tft.drawBitmap(3, 75, neve2, 48, 48, CHU2);
+    tft.drawBitmap(3, 75, neve3, 48, 48, PRETO);
+    tft.setCursor(47,100);
+    tft.print("Geada");
   }
 
   //Quarto dia
@@ -602,17 +712,16 @@ void exibir_previsao2() {
   tft.setCursor(105, 135);
   tft.print(tempMax[3]);
   
-  if (weatherMain[3] == "Thunderstorm"){
+  if (weatherMain[3] == "Thunderstorm" || weatherMain[3] == "6"){
     tft.setCursor(47,145);
     tft.print("Tempestade");
-    tft.print((String)" " + (int)rain[3] + "mm");
     
     tft.drawBitmap(3,120,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,120,tempestade2,48,48,TEM2);
     tft.drawBitmap(3,120,tempestade3,48,48,TEM3);
     tft.drawBitmap(3,120,tempestade4,48,48,PRETO);
   }
-  else if (weatherMain[3] == "Rain"){
+  else if (weatherMain[3] == "Rain" || weatherMain[3] == "5"){
     tft.setCursor(47,145);
     tft.print("Chuva");
     tft.print((String)" " + rain[3] + "mm");
@@ -621,7 +730,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,chuva2,48,48,CHU2);
     tft.drawBitmap(3,120,chuva3,48,48,PRETO);
   }
-  else if(weatherMain[3] == "Drizzle"){
+  else if(weatherMain[3] == "Drizzle" || weatherMain[3] == "4" || weatherMain[3] == "3"){
     tft.setCursor(47,145);
     tft.print("Pouca Chuva");
     //tft.print((String)" " + (int)rain[3] + "mm");
@@ -630,7 +739,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,chuva2,48,48,CHU2);
     tft.drawBitmap(3,120,chuva3,48,48,PRETO);
   }
-  else if(weatherMain[3] == "Clouds"){
+  else if(weatherMain[3] == "Clouds" || weatherMain[3] == "2" || weatherMain[3] == "9"){
     tft.setCursor(47,145);
     tft.print("Nublado");
     tft.print((String)" UV " + (int)uvi[3] );
@@ -639,7 +748,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,nublado2,48,48,NUB2);
     tft.drawBitmap(3,120,nublado3,48,48,PRETO);
   }
-  else if(weatherMain[3] == "Clear"){
+  else if(weatherMain[3] == "Clear" || weatherMain[3] == "1"){
     tft.setCursor(47, 145);
     tft.print("Sol");
     tft.print((String)"  UV " + uvi[3] );
@@ -647,6 +756,12 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,sol1,48,48,SOL1);
     tft.drawBitmap(3,120,sol2,48,48,SOL2);
     tft.drawBitmap(3,120,sol3,48,48,PRETO);
+  }else if(weatherMain[3] == "Snow" || weatherMain[3] == "8"){
+    tft.drawBitmap(3, 120, neve1, 48, 48, CHU1);
+    tft.drawBitmap(3, 120, neve2, 48, 48, CHU2);
+    tft.drawBitmap(3, 120, neve3, 48, 48, PRETO);
+    tft.setCursor(47,145);
+    tft.print("Geada");
   }
   
 }
@@ -810,7 +925,12 @@ void loop() {
   if ( temporizador_clima + UPDATE_TIME <= millis() ) {
       if (WiFi.status() == WL_CONNECTED) {
         Serial.println("Consultando previsão!");
-        consultar_previsao();
+        if (USAR_API == 1){
+          consultar_previsao_open_weather();
+        }else{
+          consultar_previsao_clima_tempo();
+        }
+        
         temporizador_clima = millis();
       }
   }

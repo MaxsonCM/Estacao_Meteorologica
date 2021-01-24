@@ -23,10 +23,11 @@
 - [x] Temporizador para troca de tela.
 - [x] Clique curto no botão momentâneo para troca de tela.
 - [x] Clique longo no botão momentâneo para troca da cor do tema.
-- [x] Indicador de intensidade sinal de rede.
+- [x] Icone de Indicação de intensidade sinal de rede.
 - [x] Temporizador para API (retira o delay onde aparece a tela da previsão).
 - [x] Tela da previsão do dia atual.
-- [ ] [Consulta pela API climatempo](https://advisor.climatempo.com.br/).
+- [x] Novos icones(Wifi, indicador e consulta de API, clima - neve).
+- [x] [Consulta pela API climatempo](https://advisor.climatempo.com.br/).
 
 ## Conexões dos componentes:
 
