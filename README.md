@@ -59,6 +59,6 @@
 
 ## Criando novas imagens para o display LCD TFT
 
-[Conversor de imagem](http://javl.github.io/image2cpp/)
+[Site para conversor de imagem em array hexadecimais](http://javl.github.io/image2cpp/)
 * Para facilitar a imagem deve conter apenas as cores preto e branco.
 * Apenas a parte brancas na imagem será a area que será preenchida pela biblioteca do display.

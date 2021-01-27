@@ -67,6 +67,7 @@ extern const int CLIMA_TEMPO_LOCATE;
 long temporizador_clima;
 const long UPDATE_TIME = 60000 * 30; // 30 minutos
 boolean consulta;
+int hora = 0;
 
 String weatherMain[4];
 int tempMin[4];
@@ -261,6 +262,8 @@ void horario(){
     
     int currentHour = timeClient.getHours();
     int currentMinute = timeClient.getMinutes();
+
+    hora = currentHour;
     
     if (currentHour < 10){
       tft.print("0");
@@ -358,7 +361,8 @@ void consultar_previsao_clima_tempo() {
         deserializeJson(doc, http.getString());
         
         Serial.println("Lento dados do documento Json");
-        String data_atual;
+        
+        
         for (int i = 0; i <= 3; i++) {
           String data_atual = doc["data"][i]["date"];
           int m, a, s, ano, dia, mes, semana;
@@ -379,9 +383,19 @@ void consultar_previsao_clima_tempo() {
           if(semana < 0){ semana = semana + 7;}
           
           mes -= 1;
-          
-          String icone = doc["data"][i]["text_icon"]["icon"]["morning"];
-          
+          String icone;
+          if (i == 0 ){
+            if ( hora > 4 &&  hora < 16 ){
+              String iconeD = doc["data"][i]["text_icon"]["icon"]["day"];
+              icone = iconeD;
+            }else{
+              String iconeN = doc["data"][i]["text_icon"]["icon"]["night"];
+              icone = iconeN;
+            }
+          }else {
+            String iconeM = doc["data"][i]["text_icon"]["icon"]["morning"];
+            icone = iconeM;
+          }
           weatherMain[i] = icone.substring(0,1);
           wday[i] = WDAY_NAMES[semana];
           mday[i] = dia;
