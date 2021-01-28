@@ -384,18 +384,21 @@ void consultar_previsao_clima_tempo() {
           
           mes -= 1;
           String icone;
-          if (i == 0 ){
-            if ( hora > 4 &&  hora < 16 ){
-              String iconeD = doc["data"][i]["text_icon"]["icon"]["day"];
-              icone = iconeD;
-            }else{
-              String iconeN = doc["data"][i]["text_icon"]["icon"]["night"];
-              icone = iconeN;
-            }
-          }else {
-            String iconeM = doc["data"][i]["text_icon"]["icon"]["morning"];
-            icone = iconeM;
+          
+          if ( hora >= 0 &&  hora < 6 ){
+            String iconeD = doc["data"][i]["text_icon"]["icon"]["dawn"];
+            icone = iconeD;
+          }else if ( hora >= 6 &&  hora < 12 ){
+            String iconeD = doc["data"][i]["text_icon"]["icon"]["morning"];
+            icone = iconeD;
+          }else if ( hora >= 12 &&  hora < 18 ){
+            String iconeD = doc["data"][i]["text_icon"]["icon"]["afternoon"];
+            icone = iconeD;
+          }else{
+            String iconeN = doc["data"][i]["text_icon"]["icon"]["night"];
+            icone = iconeN;
           }
+          
           weatherMain[i] = icone.substring(0,1);
           wday[i] = WDAY_NAMES[semana];
           mday[i] = dia;
