@@ -72,6 +72,7 @@ int hora = 0;
 String weatherMain[4];
 int tempMin[4];
 int tempMax[4];
+int prob[4];
 float rain[4];
 float uvi[4];
 String wday[4];
@@ -407,6 +408,7 @@ void consultar_previsao_clima_tempo() {
           tempMax[i] = doc["data"][i]["thermal_sensation"]["max"];
           rain[i] = doc["data"][i]["rain"]["precipitation"];
           uvi[i] = doc["data"][i]["uv"]["max"];
+          prob[i] = doc["data"][i]["rain"]["probability"];
         }
         
         consulta = true;
@@ -446,14 +448,15 @@ void consultar_previsao_open_weather() {
     for (int i = 0; i <= 3; i++) {
       observationTimestamp = openWeatherMapOneCallData.daily[i].dt;
       timeInfo = localtime(&observationTimestamp);
-      wday[i] = WDAY_NAMES[timeInfo->tm_wday];
-      mday[i] = (timeInfo->tm_mday);
-      mon[i] = MONTH_NAMES[timeInfo->tm_mon];
+      wday[i]  = WDAY_NAMES[timeInfo->tm_wday];
+      mday[i]  = (timeInfo->tm_mday);
+      mon[i]   = MONTH_NAMES[timeInfo->tm_mon];
       tempMin[i] = openWeatherMapOneCallData.daily[i].tempMin;
       tempMax[i] = openWeatherMapOneCallData.daily[i].tempMax;
       weatherMain[i] = openWeatherMapOneCallData.daily[i].weatherMain;
       rain[i] = openWeatherMapOneCallData.daily[i].rain;
-      uvi[i] = openWeatherMapOneCallData.daily[i].uvi;
+      uvi[i]  = openWeatherMapOneCallData.daily[i].uvi;
+      prob[i] = -1;//openWeatherMapOneCallData.daily[i].pop * 100;
     }
     
     consulta = true;
@@ -551,8 +554,14 @@ void exibir_previsao1() {
   tft.setCursor(70, posicaoY);
   tft.print((String)" " + rain[0] + "mm");
   
+  posicaoY += 10;
+  if (prob[0] > -1 ) {
+    tft.setCursor(70, posicaoY);
+    tft.print((String)" " + prob[0] + "%");
+  }
+  
   tft.setTextSize(2);
-  posicaoY += 20;  
+  posicaoY += 10;
   tft.setCursor(40, posicaoY);
   tft.print("HOJE");
 }
