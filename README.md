@@ -3,6 +3,7 @@
 [Baseado na blue box 6 da Filipe Flop](https://www.filipeflop.com/blog/estacao-meteorologica-com-esp8266-nodemcu/)
 
 [Dependências do projeto](http://img.filipeflop.com/files/download/BLU06/libraries.rar)
+
 Adafruit BME280 Library versão: 1.1.0
 Adafruit GFX Library versão: 1.10.2
 Adafruit ST7735 and ST7789 Library versão: 1.6.0
