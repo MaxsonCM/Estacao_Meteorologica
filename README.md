@@ -1,6 +1,6 @@
 # Estação Meteorológica com ESP8266
 
-[Baseado na blue box 6 da Filipe Flop](https://www.filipeflop.com/blog/estacao-meteorologica-com-esp8266-nodemcu/)
+[Baseado na sexta edição da blue box da Filipe Flop](https://www.filipeflop.com/blog/estacao-meteorologica-com-esp8266-nodemcu/)
 
 ### [Dependências do projeto](http://img.filipeflop.com/files/download/BLU06/libraries.rar)
 
@@ -9,8 +9,11 @@
 * Adafruit ST7735 and ST7789 Library versão: 1.6.0
 * DHT sensor library versão: 1.4.0
 * ESP8266WiFi versão: 1.0.0
+* NTPCliente Versão: 3.2.0
+* Adafruit Unified Sensor versão: 1.1.4
+* Json Streaming Parser versão: 1.0.5
+* ESP8266 Weather Station versão: 2.0.1
 * ArduinoJson versão: 6.17.2
-
 
 ## Itens usados
 * Módulo WiFi ESP8266 NodeMCU
