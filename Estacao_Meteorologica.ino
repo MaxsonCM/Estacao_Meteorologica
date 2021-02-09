@@ -8,7 +8,6 @@
 #include <time.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
-#include "OpenWeatherMapOneCall.h"
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
@@ -55,10 +54,7 @@ extern const char* OPEN_WEATHER_MAP_APP_ID;
 // - Definir no arquivo config.c
 extern float OPEN_WEATHER_MAP_LOCATTION_LAT;
 extern float OPEN_WEATHER_MAP_LOCATTION_LON;
-String OPEN_WEATHER_MAP_LANGUAGE = "pt";
-boolean IS_METRIC = true;
 
-OpenWeatherMapOneCallData openWeatherMapOneCallData;
 // Definir variaveis do cliema tempo
 extern const char* CLIMA_TEMPO_TOKEN;
 extern const int CLIMA_TEMPO_LOCATE;
@@ -426,44 +422,71 @@ void consultar_previsao_clima_tempo() {
   
 }
 
+
 void consultar_previsao_open_weather() {
   
   Serial.println("Consultando API OPEN WEATHER...");
   
   tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
   tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
-
+  
   if (WiFi.status() == WL_CONNECTED) {
-    OpenWeatherMapOneCall *oneCallClient = new OpenWeatherMapOneCall();
-    oneCallClient->setMetric(IS_METRIC);
-    oneCallClient->setLanguage(OPEN_WEATHER_MAP_LANGUAGE);
     
-    oneCallClient->update(&openWeatherMapOneCallData, String(OPEN_WEATHER_MAP_APP_ID), OPEN_WEATHER_MAP_LOCATTION_LAT, OPEN_WEATHER_MAP_LOCATTION_LON);
-    delete oneCallClient;
-    oneCallClient = nullptr;
-  
-    time_t observationTimestamp;
-    struct tm* timeInfo;
-  
-    for (int i = 0; i <= 3; i++) {
-      observationTimestamp = openWeatherMapOneCallData.daily[i].dt;
-      timeInfo = localtime(&observationTimestamp);
-      wday[i]  = WDAY_NAMES[timeInfo->tm_wday];
-      mday[i]  = (timeInfo->tm_mday);
-      mon[i]   = MONTH_NAMES[timeInfo->tm_mon];
-      tempMin[i] = openWeatherMapOneCallData.daily[i].tempMin;
-      tempMax[i] = openWeatherMapOneCallData.daily[i].tempMax;
-      weatherMain[i] = openWeatherMapOneCallData.daily[i].weatherMain;
-      rain[i] = openWeatherMapOneCallData.daily[i].rain;
-      uvi[i]  = openWeatherMapOneCallData.daily[i].uvi;
-      prob[i] = -1;//openWeatherMapOneCallData.daily[i].pop * 100;
+    Serial.println("HTTPClient - API OPEN WEATHER...");
+    
+    HTTPClient http;
+    
+    Serial.println("Montando url de consulta - API OPEN WEATHER...");
+    http.begin((String) "http://api.openweathermap.org:80/data/2.5/onecall?appid=" + OPEN_WEATHER_MAP_APP_ID + "&lat=" + OPEN_WEATHER_MAP_LOCATTION_LAT + "&lon=" + OPEN_WEATHER_MAP_LOCATTION_LON + "&units=metric&lang=pt&exclude=current,minutely,hourly,alerts");
+    
+    Serial.println("GET - API OPEN WEATHER...");
+    int httpCode = http.GET();
+    
+    if (httpCode > 0) {
+      Serial.println((String) "Status " + httpCode);
+      
+      if (httpCode == 200){
+        Serial.println("Criando documento Json");
+        DynamicJsonDocument doc(8192);
+        Serial.println("Deserializando");
+        deserializeJson(doc, http.getString());
+        
+        Serial.println("Lento dados do documento Json");
+        
+        time_t observationTimestamp;
+        struct tm* timeInfo;
+        
+        for (int i = 0; i <= 3; i++) {
+          observationTimestamp = doc["daily"][i]["dt"];
+          timeInfo = localtime(&observationTimestamp);
+          wday[i]  = WDAY_NAMES[timeInfo->tm_wday];
+          mday[i]  = (timeInfo->tm_mday);
+          mon[i]   = MONTH_NAMES[timeInfo->tm_mon];
+          tempMin[i] = doc["daily"][i]["temp"]["min"];
+          tempMax[i] = doc["daily"][i]["temp"]["max"];
+          String weather = doc["daily"][i]["weather"][0]["main"];
+          weatherMain[i] = weather;
+          rain[i] = doc["daily"][i]["rain"];
+          uvi[i]  = doc["daily"][i]["uvi"];
+          prob[i] = doc["daily"][i]["pop"];
+          prob[i] *= 100;
+        }
+        
+        consulta = true;
+        tft.drawBitmap(2, 2, circulo1, 8, 8, VERDE); 
+      }else{
+        Serial.println("GET ERRO - API OPEN WEATHER...");
+      }
+    }else{
+      Serial.println("ERRO - API OPEN WEATHER...");
     }
     
-    consulta = true;
-    tft.drawBitmap(2, 2, circulo1, 8, 8, VERDE);
+    http.end();
+ 
   }
   
 }
+
 
 void exibir_previsao1() {
   //primeiro dia
@@ -552,12 +575,12 @@ void exibir_previsao1() {
   tft.setCursor(10, posicaoY);
   tft.print((String)"UV " + uvi[0]);
   tft.setCursor(70, posicaoY);
-  tft.print((String)" " + rain[0] + "mm");
+  tft.print((String)" " + (int)rain[0] + " mm");
   
   posicaoY += 10;
   if (prob[0] > -1 ) {
     tft.setCursor(70, posicaoY);
-    tft.print((String)" " + prob[0] + "%");
+    tft.print((String)" " + prob[0] + " %");
   }
   
   tft.setTextSize(2);
@@ -592,8 +615,8 @@ void exibir_previsao2() {
   tft.print(tempMax[1]);
   
   if (weatherMain[1] == "Thunderstorm" || weatherMain[1] == "6"){
-    tft.setCursor(47,55);
-    tft.print("Tempestade");
+    //tft.setCursor(47,55);
+    //tft.print("Tempestade");
     
     tft.drawBitmap(3,30,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,30,tempestade2,48,48,TEM2);
@@ -601,17 +624,17 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,tempestade4,48,48,PRETO);
   }
   else if (weatherMain[1] == "Rain" || weatherMain[1] == "5"){
-    tft.setCursor(47,55);
-    tft.print("Chuva");
-    tft.print((String)" " + rain[1] + "mm");
+    //tft.setCursor(47,55);
+    //tft.print("Chuva");
+    //tft.print((String)" " + rain[1] + "mm");
     
     tft.drawBitmap(3,30,chuva1,48,48,CHU1);
     tft.drawBitmap(3,30,chuva2,48,48,CHU2);
     tft.drawBitmap(3,30,chuva3,48,48,PRETO);
   }
   else if(weatherMain[1] == "Drizzle" || weatherMain[1] == "4" || weatherMain[1] == "3"){
-    tft.setCursor(47,55);
-    tft.print("Pouca Chuva");
+    //tft.setCursor(47,55);
+    //tft.print("Pouca Chuva");
     //tft.print((String)" " + (int)rain[1] + "mm");
     
     tft.drawBitmap(3,30,chuva1,48,48,CHU1);
@@ -619,18 +642,18 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,chuva3,48,48,PRETO);
   }
   else if(weatherMain[1] == "Clouds" || weatherMain[1] == "2" || weatherMain[1] == "9"){
-    tft.setCursor(47,55);
-    tft.print("Nublado");
-    tft.print((String)" UV " + (int)uvi[1] );
+    //tft.setCursor(47,55);
+    //tft.print("Nublado");
+    //tft.print((String)" UV " + (int)uvi[1] );
     
     tft.drawBitmap(3,30,nublado1,48,48,NUB1);
     tft.drawBitmap(3,30,nublado2,48,48,NUB2);
     tft.drawBitmap(3,30,nublado3,48,48,PRETO);
   }
   else if(weatherMain[1] == "Clear" || weatherMain[1] == "1"){
-    tft.setCursor(47,55);
-    tft.print("Sol");
-    tft.print((String)"  UV " + uvi[1] );
+    //tft.setCursor(47,55);
+    //tft.print("Sol");
+    //tft.print((String)"  UV " + uvi[1] );
     
     tft.drawBitmap(3,30,sol1,48,48,SOL1);
     tft.drawBitmap(3,30,sol2,48,48,SOL2);
@@ -639,9 +662,12 @@ void exibir_previsao2() {
     tft.drawBitmap(3, 30, neve1, 48, 48, CHU1);
     tft.drawBitmap(3, 30, neve2, 48, 48, CHU2);
     tft.drawBitmap(3, 30, neve3, 48, 48, PRETO);
-    tft.setCursor(47,55);
-    tft.print("Geada");
+    //tft.setCursor(47,55);
+    //tft.print("Geada");
   }
+  tft.setCursor(47,55);
+  tft.print((String)" " + (int)rain[1] + " mm");
+  tft.print((String)"  " + (int)prob[1] + " %");
   
   //Terceiro dia
   tft.setCursor(47,80);
@@ -665,8 +691,8 @@ void exibir_previsao2() {
   tft.print(tempMax[2]);
   
   if (weatherMain[2] == "Thunderstorm" || weatherMain[2] == "6"){
-    tft.setCursor(47,100);
-    tft.print("Tempestade");
+    //tft.setCursor(47,100);
+    //tft.print("Tempestade");
     
     tft.drawBitmap(3,75,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,75,tempestade2,48,48,TEM2);
@@ -674,17 +700,17 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,tempestade4,48,48,PRETO);
   }
   else if (weatherMain[2] == "Rain" || weatherMain[2] == "5"){
-    tft.setCursor(47,100);
-    tft.print("Chuva");
-    tft.print((String)" " + rain[2] + "mm");
+    //tft.setCursor(47,100);
+    //tft.print("Chuva");
+    //tft.print((String)" " + rain[2] + "mm");
     
     tft.drawBitmap(3,75,chuva1,48,48,CHU1);
     tft.drawBitmap(3,75,chuva2,48,48,CHU2);
     tft.drawBitmap(3,75,chuva3,48,48,PRETO);
   }
   else if(weatherMain[2] == "Drizzle" || weatherMain[2] == "4" || weatherMain[2] == "3"){
-    tft.setCursor(47,100);
-    tft.print("Pouca Chuva");
+    //tft.setCursor(47,100);
+    //tft.print("Pouca Chuva");
     //tft.print((String)" " + (int)rain[2] + "mm");
     
     tft.drawBitmap(3,75,chuva1,48,48,CHU1);
@@ -692,18 +718,18 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,chuva3,48,48,PRETO);
   }
   else if(weatherMain[2] == "Clouds" || weatherMain[2] == "2" || weatherMain[2] == "9"){
-    tft.setCursor(47,100);
-    tft.print("Nublado");
-    tft.print((String)" UV " + (int)uvi[2] );
+    //tft.setCursor(47,100);
+    //tft.print("Nublado");
+    //tft.print((String)" UV " + (int)uvi[2] );
     
     tft.drawBitmap(3,75,nublado1,48,48,NUB1);
     tft.drawBitmap(3,75,nublado2,48,48,NUB2);
     tft.drawBitmap(3,75,nublado3,48,48,PRETO);
   }
   else if(weatherMain[2] == "Clear" || weatherMain[2] == "1"){
-    tft.setCursor(47, 100);
-    tft.print("Sol");
-    tft.print((String)"  UV " + uvi[2] );
+    //tft.setCursor(47, 100);
+    //tft.print("Sol");
+    //tft.print((String)"  UV " + uvi[2] );
     
     tft.drawBitmap(3,75,sol1,48,48,SOL1);
     tft.drawBitmap(3,75,sol2,48,48,SOL2);
@@ -712,10 +738,13 @@ void exibir_previsao2() {
     tft.drawBitmap(3, 75, neve1, 48, 48, CHU1);
     tft.drawBitmap(3, 75, neve2, 48, 48, CHU2);
     tft.drawBitmap(3, 75, neve3, 48, 48, PRETO);
-    tft.setCursor(47,100);
-    tft.print("Geada");
+    //tft.setCursor(47,100);
+    //tft.print("Geada");
   }
-
+  tft.setCursor(47,100);
+  tft.print((String)" " + (int)rain[2] + " mm");
+  tft.print((String)"  " + (int)prob[2] + " %");
+  
   //Quarto dia
   tft.setTextSize(1);
   tft.setCursor(47,125);
@@ -739,8 +768,8 @@ void exibir_previsao2() {
   tft.print(tempMax[3]);
   
   if (weatherMain[3] == "Thunderstorm" || weatherMain[3] == "6"){
-    tft.setCursor(47,145);
-    tft.print("Tempestade");
+    //tft.setCursor(47,145);
+    //tft.print("Tempestade");
     
     tft.drawBitmap(3,120,tempestade1,48,48,TEM1);
     tft.drawBitmap(3,120,tempestade2,48,48,TEM2);
@@ -748,17 +777,17 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,tempestade4,48,48,PRETO);
   }
   else if (weatherMain[3] == "Rain" || weatherMain[3] == "5"){
-    tft.setCursor(47,145);
-    tft.print("Chuva");
-    tft.print((String)" " + rain[3] + "mm");
+    //tft.setCursor(47,145);
+    //tft.print("Chuva");
+    //tft.print((String)" " + rain[3] + "mm");
     
     tft.drawBitmap(3,120,chuva1,48,48,CHU1);
     tft.drawBitmap(3,120,chuva2,48,48,CHU2);
     tft.drawBitmap(3,120,chuva3,48,48,PRETO);
   }
   else if(weatherMain[3] == "Drizzle" || weatherMain[3] == "4" || weatherMain[3] == "3"){
-    tft.setCursor(47,145);
-    tft.print("Pouca Chuva");
+    //tft.setCursor(47,145);
+    //tft.print("Pouca Chuva");
     //tft.print((String)" " + (int)rain[3] + "mm");
     
     tft.drawBitmap(3,120,chuva1,48,48,CHU1);
@@ -766,18 +795,18 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,chuva3,48,48,PRETO);
   }
   else if(weatherMain[3] == "Clouds" || weatherMain[3] == "2" || weatherMain[3] == "9"){
-    tft.setCursor(47,145);
-    tft.print("Nublado");
-    tft.print((String)" UV " + (int)uvi[3] );
+    //tft.setCursor(47,145);
+    //tft.print("Nublado");
+    //tft.print((String)" UV " + (int)uvi[3] );
     
     tft.drawBitmap(3,120,nublado1,48,48,NUB1);
     tft.drawBitmap(3,120,nublado2,48,48,NUB2);
     tft.drawBitmap(3,120,nublado3,48,48,PRETO);
   }
   else if(weatherMain[3] == "Clear" || weatherMain[3] == "1"){
-    tft.setCursor(47, 145);
-    tft.print("Sol");
-    tft.print((String)"  UV " + uvi[3] );
+    //tft.setCursor(47, 145);
+    //tft.print("Sol");
+    //tft.print((String)"  UV " + uvi[3] );
     
     tft.drawBitmap(3,120,sol1,48,48,SOL1);
     tft.drawBitmap(3,120,sol2,48,48,SOL2);
@@ -786,9 +815,12 @@ void exibir_previsao2() {
     tft.drawBitmap(3, 120, neve1, 48, 48, CHU1);
     tft.drawBitmap(3, 120, neve2, 48, 48, CHU2);
     tft.drawBitmap(3, 120, neve3, 48, 48, PRETO);
-    tft.setCursor(47,145);
-    tft.print("Geada");
+    //tft.setCursor(47,145);
+    //tft.print("Geada");
   }
+  tft.setCursor(47,145);
+  tft.print((String)" " + (int)rain[3] + " mm");
+  tft.print((String)"  " + (int)prob[3] + " %");
   
 }
 

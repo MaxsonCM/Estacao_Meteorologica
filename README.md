@@ -36,6 +36,7 @@
 - [x] Tela da previsão do dia atual.
 - [x] Novos icones(Wifi, indicador e consulta de API, clima - neve).
 - [x] [Consulta pela API climatempo](https://advisor.climatempo.com.br/).
+- [x] [Consulta pela API Open Weather](https://openweathermap.org/api/one-call-api), retirado dependencia do projeto externo ~OpenWeatherMapOneCall.h~.
 
 ## Conexões dos componentes:
 
