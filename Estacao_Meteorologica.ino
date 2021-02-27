@@ -333,7 +333,7 @@ void consultar_previsao_clima_tempo() {
 
   Serial.println("Consultando API clima tempo...");
   
-  tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+  tft.drawBitmap(2, 2, circulo1, 8, 8, SOL2);
   tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
   
   if (WiFi.status() == WL_CONNECTED) {
@@ -427,7 +427,7 @@ void consultar_previsao_open_weather() {
   
   Serial.println("Consultando API OPEN WEATHER...");
   
-  tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+  tft.drawBitmap(2, 2, circulo1, 8, 8, SOL2);
   tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
   
   if (WiFi.status() == WL_CONNECTED) {
@@ -924,21 +924,30 @@ void loop() {
     horario();
     temperatura();    
     desenha = false;
-    
+    if (consulta == false) {
+      tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+      tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
+    }
   } else if ( passo == 1 && desenha ){
     tft.fillScreen(back_color);
     data();
     horario(); 
     umidade();
     desenha = false;
-  
+    if (consulta == false) {
+      tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+      tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
+    }
   } else if ( passo == 2 && desenha ){  
     tft.fillScreen(back_color);
     data();
     horario(); 
     pressao();
     desenha = false;
-    
+    if (consulta == false) {
+      tft.drawBitmap(2, 2, circulo1, 8, 8, VERMELHO);
+      tft.drawBitmap(2, 2, circulo2, 8, 8, PRETO);
+    }
   } else if ( passo == 3 && desenha ) {
     if (consulta == true) { 
       tft.fillScreen(back_color);
@@ -979,8 +988,8 @@ void loop() {
     desenha = false;
     passo = -1;
   }
-
-  if ( temporizador_clima + UPDATE_TIME <= millis() ) {
+  
+  if ( temporizador_clima + UPDATE_TIME <= millis() || consulta == false) {
       if (WiFi.status() == WL_CONNECTED) {
         Serial.println("Consultando previsão!");
         if (USAR_API == 1){
