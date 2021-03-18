@@ -3,7 +3,7 @@ const char* WIFI_SSID     = "nome_wifi";
 const char* WIFI_PASSWORD = "senha_wifi";
 
 //Define qual API será usada
-const int USAR_API = 2;
+int USAR_API = 2; // 1 - Open weather / 2 - Clima tempo
 
 //Definições Open Weather Map
 const char* OPEN_WEATHER_MAP_APP_ID = "chave_api_open_weather";
@@ -14,7 +14,7 @@ float OPEN_WEATHER_MAP_LOCATTION_LAT = 0;
 float OPEN_WEATHER_MAP_LOCATTION_LON = 0;
 
 //Difinições da API clima tempo
-const int CLIMA_TEMPO_LOCATE = 0;//código da cidade
+int CLIMA_TEMPO_LOCATE = 0;//código da cidade
 const char* CLIMA_TEMPO_TOKEN = "token";
 
 /*

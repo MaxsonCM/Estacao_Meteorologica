@@ -47,7 +47,7 @@ WiFiUDP ntpUDP;
 const long utcOffsetInSeconds = -10800;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
-extern const int USAR_API;
+extern int USAR_API;
 
 //Definições Open Weather Map 
 extern const char* OPEN_WEATHER_MAP_APP_ID; 
@@ -57,7 +57,7 @@ extern float OPEN_WEATHER_MAP_LOCATTION_LON;
 
 // Definir variaveis do cliema tempo
 extern const char* CLIMA_TEMPO_TOKEN;
-extern const int CLIMA_TEMPO_LOCATE;
+extern int CLIMA_TEMPO_LOCATE;
 
 // Variáveis de consulta do clima
 long temporizador_clima;
@@ -572,19 +572,17 @@ void exibir_previsao1() {
   tft.print(tempMax[0]);
 
   posicaoY += 10;
-  tft.setCursor(10, posicaoY);
+  tft.setCursor(7, posicaoY);
   tft.print((String)"UV " + uvi[0]);
-  tft.setCursor(70, posicaoY);
+  //tft.setCursor(70, posicaoY);
   tft.print((String)" " + (int)rain[0] + " mm");
   
-  posicaoY += 10;
-  if (prob[0] > -1 ) {
-    tft.setCursor(70, posicaoY);
+  if (prob[0] > -1 ) {    
     tft.print((String)" " + prob[0] + " %");
   }
   
   tft.setTextSize(2);
-  posicaoY += 10;
+  posicaoY += 20;
   tft.setCursor(40, posicaoY);
   tft.print("HOJE");
 }
