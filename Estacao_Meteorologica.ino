@@ -536,7 +536,7 @@ void exibir_previsao1() {
     posicaoY += 48;
     tft.setCursor(52, posicaoY);
     tft.print("Sol");
-  }else if(weatherMain[0] == "Snow" || weatherMain[0] == "8"){
+  }else if(weatherMain[0] == "Snow" || weatherMain[0] == "7" || weatherMain[0] == "8"){
     tft.drawBitmap(posicaoX, posicaoY, neve1, 48, 48, NUB1);
     tft.drawBitmap(posicaoX, posicaoY, neve2, 48, 48, NUB2);
     tft.drawBitmap(posicaoX, posicaoY, neve3, 48, 48, PRETO);
@@ -656,7 +656,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,30,sol1,48,48,SOL1);
     tft.drawBitmap(3,30,sol2,48,48,SOL2);
     tft.drawBitmap(3,30,sol3,48,48,PRETO);
-  }else if(weatherMain[1] == "Snow" || weatherMain[1] == "8"){
+  }else if(weatherMain[1] == "Snow" || weatherMain[1] == "7" || weatherMain[1] == "8"){
     tft.drawBitmap(3, 30, neve1, 48, 48, CHU1);
     tft.drawBitmap(3, 30, neve2, 48, 48, CHU2);
     tft.drawBitmap(3, 30, neve3, 48, 48, PRETO);
@@ -732,7 +732,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,75,sol1,48,48,SOL1);
     tft.drawBitmap(3,75,sol2,48,48,SOL2);
     tft.drawBitmap(3,75,sol3,48,48,PRETO);
-  }else if(weatherMain[2] == "Snow" || weatherMain[2] == "8"){
+  }else if(weatherMain[2] == "Snow" || weatherMain[2] == "7" || weatherMain[2] == "8"){
     tft.drawBitmap(3, 75, neve1, 48, 48, CHU1);
     tft.drawBitmap(3, 75, neve2, 48, 48, CHU2);
     tft.drawBitmap(3, 75, neve3, 48, 48, PRETO);
@@ -809,7 +809,7 @@ void exibir_previsao2() {
     tft.drawBitmap(3,120,sol1,48,48,SOL1);
     tft.drawBitmap(3,120,sol2,48,48,SOL2);
     tft.drawBitmap(3,120,sol3,48,48,PRETO);
-  }else if(weatherMain[3] == "Snow" || weatherMain[3] == "8"){
+  }else if(weatherMain[3] == "Snow" || weatherMain[3] == "7" || weatherMain[3] == "8"){
     tft.drawBitmap(3, 120, neve1, 48, 48, CHU1);
     tft.drawBitmap(3, 120, neve2, 48, 48, CHU2);
     tft.drawBitmap(3, 120, neve3, 48, 48, PRETO);

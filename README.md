@@ -12,7 +12,7 @@
 * NTPCliente Versão: 3.2.0
 * Adafruit Unified Sensor versão: 1.1.4
 * Json Streaming Parser versão: 1.0.5
-* ESP8266 Weather Station versão: 2.0.1
+* ~ESP8266 Weather Station versão: 2.0.1~
 * ArduinoJson versão: 6.17.2
 
 ## Itens usados
