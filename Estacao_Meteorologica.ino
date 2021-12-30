@@ -9,7 +9,6 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include <ESP8266HTTPClient.h>
-#define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 
 // Pinos
@@ -344,7 +343,7 @@ void consultar_previsao_clima_tempo() {
     HTTPClient http;
     
     Serial.println("Montando url de consulta - API clima tempo...");
-    http.begin(wifiClient, (String) "http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/" + CLIMA_TEMPO_LOCATE + "/days/15?token=" + CLIMA_TEMPO_TOKEN);
+    http.begin((String) "http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/" + CLIMA_TEMPO_LOCATE + "/days/15?token=" + CLIMA_TEMPO_TOKEN);
     
     Serial.println("GET - API clima tempo...");
     int httpCode = http.GET();
@@ -355,12 +354,11 @@ void consultar_previsao_clima_tempo() {
       if (httpCode == 200){
         Serial.println("Criando documento Json");
         DynamicJsonDocument doc(8192);
+        
         Serial.println("Deserializando");
         deserializeJson(doc, http.getString());
         
         Serial.println("Lento dados do documento Json");
-        
-        
         for (int i = 0; i <= 3; i++) {
           String data_atual = doc["data"][i]["date"];
           int m, a, s, ano, dia, mes, semana;
@@ -434,11 +432,10 @@ void consultar_previsao_open_weather() {
   if (WiFi.status() == WL_CONNECTED) {
     
     Serial.println("HTTPClient - API OPEN WEATHER...");
-    
     HTTPClient http;
     
     Serial.println("Montando url de consulta - API OPEN WEATHER...");
-    http.begin(wifiClient, (String) "http://api.openweathermap.org:80/data/2.5/onecall?appid=" + OPEN_WEATHER_MAP_APP_ID + "&lat=" + OPEN_WEATHER_MAP_LOCATTION_LAT + "&lon=" + OPEN_WEATHER_MAP_LOCATTION_LON + "&units=metric&lang=pt&exclude=current,minutely,hourly,alerts");
+    http.begin((String) "http://api.openweathermap.org:80/data/2.5/onecall?appid=" + OPEN_WEATHER_MAP_APP_ID + "&lat=" + OPEN_WEATHER_MAP_LOCATTION_LAT + "&lon=" + OPEN_WEATHER_MAP_LOCATTION_LON + "&units=metric&lang=pt&exclude=current,minutely,hourly,alerts");
     
     Serial.println("GET - API OPEN WEATHER...");
     int httpCode = http.GET();
