@@ -4,10 +4,10 @@
 
 ### [Dependências do projeto](http://img.filipeflop.com/files/download/BLU06/libraries.rar)
 
-## Versão do códuigo da placa
-* ESP8266 versão: 2.7.4
+### Versão do código para placa
+* ESP8266 versão: 2.7.4 (recomendada)
 
-##Blibliotecas usadas
+### Blibliotecas usadas
 * Adafruit BME280 Library versão: 1.1.0
 * Adafruit GFX Library versão: 1.10.2
 * Adafruit ST7735 and ST7789 Library versão: 1.6.0
