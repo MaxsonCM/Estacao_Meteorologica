@@ -842,6 +842,11 @@ void setup() {
   
   // Inicialização BMP180
   bmp.begin();
+
+  WiFi.mode(WIFI_STA); //Habilita o modo estação
+  if (digitalRead(BOTAO) == HIGH) {
+    WiFi.mode(WIFI_AP);
+  }
   
   // Inicialização WiFi
   connectWifi();
