@@ -9,7 +9,10 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include <ESP8266HTTPClient.h>
+#define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
+#include <ESP8266WebServer.h>
+#include <EEPROM.h>
 
 // Pinos
 #define TFT_CS         0
@@ -27,6 +30,7 @@ uint16_t back_color;
 
 //controle de tempo de clique
 const int SHORT_PRESS_TIME = 1000;
+const int LONG_PRESS_TIME = 5000;
 long pressedTime = 0;
 int action = 0;
 int lastState = LOW;
@@ -39,6 +43,15 @@ long temporizador;
 //WiFi - Definir no arquivo config.c
 extern const char* WIFI_SSID;
 extern const char* WIFI_PASSWORD;
+extern const char* SSID_AP;
+extern const char* PASSWORD_AP;
+extern const char* site;
+
+//Function Decalration
+void launchWeb(void);
+ 
+//configurarndo servidor na porta 80
+ESP8266WebServer server(80);
 
 WiFiClient wifiClient;
 
@@ -65,6 +78,7 @@ const long UPDATE_TIME = 60000 * 30; // 30 minutos
 boolean consulta;
 int hora = 0;
 
+DynamicJsonDocument doc(8192);
 String weatherMain[4];
 int tempMin[4];
 int tempMax[4];
@@ -235,6 +249,7 @@ void data(){
     tft.print(" ");
     
     tft.print(currentYear);
+    
     if ( WiFi.RSSI() > -40 ) {
       tft.drawBitmap(120, 0, wifi_3, 8, 8, text_color);
     } else if ( WiFi.RSSI() > -60 ) {
@@ -246,7 +261,10 @@ void data(){
     }
     
   }
-  
+  if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA){
+    tft.drawBitmap(109, 1, circulo1, 8, 8, VERMELHO);
+    tft.drawBitmap(109, 1, circulo2, 8, 8, PRETO);
+  }
 }
 
 void horario(){
@@ -343,7 +361,7 @@ void consultar_previsao_clima_tempo() {
     HTTPClient http;
     
     Serial.println("Montando url de consulta - API clima tempo...");
-    http.begin((String) "http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/" + CLIMA_TEMPO_LOCATE + "/days/15?token=" + CLIMA_TEMPO_TOKEN);
+    http.begin(wifiClient, (String) "http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/" + CLIMA_TEMPO_LOCATE + "/days/15?token=" + CLIMA_TEMPO_TOKEN);
     
     Serial.println("GET - API clima tempo...");
     int httpCode = http.GET();
@@ -353,8 +371,8 @@ void consultar_previsao_clima_tempo() {
       
       if (httpCode == 200){
         Serial.println("Criando documento Json");
-        DynamicJsonDocument doc(8192);
         
+        //DynamicJsonDocument doc(8192);
         Serial.println("Deserializando");
         deserializeJson(doc, http.getString());
         
@@ -435,7 +453,7 @@ void consultar_previsao_open_weather() {
     HTTPClient http;
     
     Serial.println("Montando url de consulta - API OPEN WEATHER...");
-    http.begin((String) "http://api.openweathermap.org:80/data/2.5/onecall?appid=" + OPEN_WEATHER_MAP_APP_ID + "&lat=" + OPEN_WEATHER_MAP_LOCATTION_LAT + "&lon=" + OPEN_WEATHER_MAP_LOCATTION_LON + "&units=metric&lang=pt&exclude=current,minutely,hourly,alerts");
+    http.begin(wifiClient, (String) "http://api.openweathermap.org:80/data/2.5/onecall?appid=" + OPEN_WEATHER_MAP_APP_ID + "&lat=" + OPEN_WEATHER_MAP_LOCATTION_LAT + "&lon=" + OPEN_WEATHER_MAP_LOCATTION_LON + "&units=metric&lang=pt&exclude=current,minutely,hourly,alerts");
     
     Serial.println("GET - API OPEN WEATHER...");
     int httpCode = http.GET();
@@ -445,7 +463,7 @@ void consultar_previsao_open_weather() {
       
       if (httpCode == 200){
         Serial.println("Criando documento Json");
-        DynamicJsonDocument doc(8192);
+        //DynamicJsonDocument doc(8192);
         Serial.println("Deserializando");
         deserializeJson(doc, http.getString());
         
@@ -838,15 +856,15 @@ void setup() {
   }
   
   // Inicialização DHT11
+  Serial.println("Iniciando sensor DHT11");
   dht.begin();
   
   // Inicialização BMP180
+  Serial.println("Iniciando sensor BMP180");
   bmp.begin();
 
   WiFi.mode(WIFI_STA); //Habilita o modo estação
-  if (digitalRead(BOTAO) == HIGH) {
-    WiFi.mode(WIFI_AP);
-  }
+  
   
   // Inicialização WiFi
   connectWifi();
@@ -881,6 +899,9 @@ void loop() {
     if( (millis() - pressedTime) <= SHORT_PRESS_TIME ){
       action = 1;
       Serial.println("Acao 1");
+    } else if ( (millis() - pressedTime) >= LONG_PRESS_TIME ) {
+      action = 3;
+      Serial.println("Acao 3");
     }else{
       action = 2;
       Serial.println("Acao 2");
@@ -907,8 +928,21 @@ void loop() {
       text_color = BRANCO;
       back_color = CHUMBO;
       dark_theme = true;
-    }    
-    
+    }
+  }else if (action == 3 ){
+    if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA){
+      Serial.println("Desabilitando modo AP");
+      WiFi.softAPdisconnect();
+      WiFi.mode(WIFI_STA);
+    }else {
+      Serial.println("Habilitando modo AP");
+      WiFi.mode(WIFI_AP_STA);
+      delay(100);
+      WiFi.softAP(SSID_AP, PASSWORD_AP, 1, false);    
+      delay(100);
+      launchWeb();
+      Serial.println("AP Habilitado");
+    }
   }
   
   
@@ -1004,4 +1038,17 @@ void loop() {
       }
   }
 
+}
+
+void launchWeb()
+{
+  Serial.print("IP Local: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("IP SoftAP: ");
+  Serial.println(WiFi.softAPIP());
+  server.on("/", []() {
+    server.send(200, "text/html", (String) site);
+  });
+  server.begin();
+  Serial.println("Servidor ativo");
 }
