@@ -13,6 +13,7 @@
 #include <ArduinoJson.h>
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
+#include <ESP8266mDNS.h>
 
 // Pinos
 #define TFT_CS         0
@@ -46,6 +47,7 @@ extern const char* WIFI_PASSWORD;
 extern const char* SSID_AP;
 extern const char* PASSWORD_AP;
 extern const char* site;
+extern const char* site404;
 
 //Function Decalration
 void launchWeb(void);
@@ -262,8 +264,8 @@ void data(){
     
   }
   if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA){
-    tft.drawBitmap(109, 1, circulo1, 8, 8, VERMELHO);
-    tft.drawBitmap(109, 1, circulo2, 8, 8, PRETO);
+    tft.drawBitmap(110, 1, circulo1, 8, 8, VERMELHO);
+    tft.drawBitmap(110, 1, circulo2, 8, 8, PRETO);
   }
 }
 
@@ -865,7 +867,6 @@ void setup() {
 
   WiFi.mode(WIFI_STA); //Habilita o modo estação
   
-  
   // Inicialização WiFi
   connectWifi();
   
@@ -937,14 +938,17 @@ void loop() {
     }else {
       Serial.println("Habilitando modo AP");
       WiFi.mode(WIFI_AP_STA);
-      delay(100);
-      WiFi.softAP(SSID_AP, PASSWORD_AP, 1, false);    
+      
       delay(100);
       launchWeb();
       Serial.println("AP Habilitado");
     }
   }
   
+  if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA){
+    MDNS.update();
+    server.handleClient();
+  }
   
   if ( desenha == false ){
     if ( millis() >= temporizador + 15000 ) {
@@ -1042,13 +1046,30 @@ void loop() {
 
 void launchWeb()
 {
+  delay(100);
+  WiFi.softAP(SSID_AP, PASSWORD_AP, 1, false);    
+  delay(100);
   Serial.print("IP Local: ");
   Serial.println(WiFi.localIP());
   Serial.print("IP SoftAP: ");
   Serial.println(WiFi.softAPIP());
+  
   server.on("/", []() {
     server.send(200, "text/html", (String) site);
   });
+  server.onNotFound([]() {
+    server.send(404, "text/html", (String) site404);
+  });
+  delay(100);
+  if (!MDNS.begin("esp8266")){
+    Serial.println("Problemas ao configurar o MDNS");
+  }else{
+    Serial.println("MDNS configurado!");
+  }
+  delay(100);
+  MDNS.addService("http", "tcp", 80);
+
+  delay(100);
   server.begin();
   Serial.println("Servidor ativo");
 }
