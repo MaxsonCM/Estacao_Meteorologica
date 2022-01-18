@@ -16,6 +16,7 @@
 * NTPCliente Versão: 3.2.0
 * Adafruit Unified Sensor versão: 1.1.4
 * Json Streaming Parser versão: 1.0.5
+* DNS Server versão: 1.1.0 [link 1](https://github.com/esp8266/Arduino/tree/master/libraries/DNSServer) ou [link 2](https://github.com/zhouhan0126/DNSServer---esp32)
 * ~ESP8266 Weather Station versão: 2.0.1~
 * ArduinoJson versão: 6.17.2
 

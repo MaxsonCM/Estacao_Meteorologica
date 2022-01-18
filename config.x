@@ -1,13 +1,16 @@
-//Definições WiFi
+//Definições WiFi - modo estação
 const char* WIFI_SSID     = "nome_wifi";
 const char* WIFI_PASSWORD = "senha_wifi";
+//Definições WiFi - modo ponto de acesso
+const char* SSID_AP     = "My Weather Station";
+const char* PASSWORD_AP = "12345678";
 
 //Define qual API será usada
 int USAR_API = 2; // 1 - Open weather / 2 - Clima tempo
 
 //Definições Open Weather Map
 const char* OPEN_WEATHER_MAP_APP_ID = "chave_api_open_weather";
-//Go to https://www.latlong.net/
+//encontre sua geolocalização em https://www.latlong.net/
 //latitude
 float OPEN_WEATHER_MAP_LOCATTION_LAT = 0;
 //longitude
